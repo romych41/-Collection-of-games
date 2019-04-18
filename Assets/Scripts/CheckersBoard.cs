@@ -1,12 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CheckersBoard : MonoBehaviour
 {
+    public static CheckersBoard Instance {set; get;}
+
     public Piece[,] pieces = new Piece[8,8];
     public GameObject whitePiecePrefab;
     public GameObject blackPiecePrefab;
+
+    public CanvasGroup alertCanvas;
+    private float lastAlert;
+    private bool alertActive;
 
     private Vector3 boardOffset = new Vector3(-4.0f, 0, -4.0f);
     private Vector3 pieceOffset = new Vector3(0.5f, 0, 0.5f);
@@ -18,21 +25,48 @@ public class CheckersBoard : MonoBehaviour
 
     private Piece selectedPiece;
     private List<Piece> forcedPieces;
+
+    private List<Piece> forcedAIPieces;
     private Vector2 mouseOver;
     private Vector2 startDrag;
     private Vector2 endDrag;
 
+    private Client client;
+
+    private NextScene ns;
+
     void Start()
     {
-        // Чтобы первыми начинали белые
-        isWhite = true;
+        Instance = this;
+        // For client
+        client = FindObjectOfType<Client>();
+
+        if(client)
+        {
+            isWhite = client.isHost;
+            Alert(client.players[0].name + " versus " + client.players[1].name);
+        }
+        else
+        {
+            Alert("White player's turn");
+        }
+
+        ns = FindObjectOfType<NextScene>();
+
         isWhiteTurn = true;
         forcedPieces = new List<Piece>();
+        forcedAIPieces = new List<Piece>();
         GenerateBoard();
     }
 
     void Update()
     {
+        if(ns.PlayWithAI)
+        {
+            AIRealise();
+        }
+
+        UpdateAlert();
         UpdateMouseOver();
         
         // if it is my turn
@@ -56,6 +90,7 @@ public class CheckersBoard : MonoBehaviour
                 //Debug.Log(startDrag.x + " " + startDrag.y + " " + x + " " + y);
             }
         }
+        
     }
 
     private void UpdateMouseOver()
@@ -115,7 +150,7 @@ public class CheckersBoard : MonoBehaviour
             {
                 selectedPiece = p;
                 startDrag = mouseOver;
-                Debug.Log(selectedPiece.name + "Start: " + startDrag);
+                //Debug.Log(selectedPiece.name + "Start: " + startDrag);
             }
             else
             {
@@ -131,7 +166,7 @@ public class CheckersBoard : MonoBehaviour
         }
     }
 
-    private void TryMove(int x1, int y1, int x2, int y2)
+    public void TryMove(int x1, int y1, int x2, int y2)
     {
         forcedPieces = ScanForPossibleMove();
 
@@ -180,7 +215,7 @@ public class CheckersBoard : MonoBehaviour
                     {
                         // Удаляем среднюю шашку между двумя
                         pieces[(x1+x2)/2, (y1+y2)/2] = null;
-                        Destroy(p.gameObject);
+                        DestroyImmediate(p.gameObject);
                         hasKilled = true;
                     }
                 }
@@ -194,6 +229,7 @@ public class CheckersBoard : MonoBehaviour
                     return;
                 }
 
+                
                 pieces[x2, y2] = selectedPiece;
                 pieces[x1, y1] = null;
                 MovePiece(selectedPiece, x2, y2);
@@ -205,6 +241,7 @@ public class CheckersBoard : MonoBehaviour
                 MovePiece(selectedPiece, x1, y1);
                 startDrag = Vector2.zero;
                 selectedPiece = null;
+                return;
             }
         }
 
@@ -237,6 +274,17 @@ public class CheckersBoard : MonoBehaviour
             }
         }
 
+        // Our message
+        if(client)
+        {
+            string msg = "CMOV|";
+            msg += startDrag.x.ToString() + "|";
+            msg += startDrag.y.ToString() + "|";
+            msg += endDrag.x.ToString() + "|";
+            msg += endDrag.y.ToString();
+
+            client.Send(msg);
+        }
 
         selectedPiece = null;
         startDrag = Vector2.zero;
@@ -246,11 +294,32 @@ public class CheckersBoard : MonoBehaviour
             return;
 
         isWhiteTurn = !isWhiteTurn;
-        // Чтобы изменять ход команд
-        isWhite = !isWhite;
         hasKilled = false;
-        
         CheckVictory();
+
+        if(!client)
+        {
+            isWhite = !isWhite;
+            if(isWhite)
+            {
+                Alert("White player's turn");
+            }
+            else
+            {
+                Alert("Black player's turn");
+            }
+        }
+        else
+        {
+            if(isWhite)
+            {
+                Alert(client.players[0].name + "'s turn");
+            }
+            else
+            {
+                Alert(client.players[1].name + "'s turn");
+            }
+        }
     }
 
     private void CheckVictory()
@@ -288,7 +357,7 @@ public class CheckersBoard : MonoBehaviour
             Debug.Log("Black team has won");
     }
 
-    // Сканирование для одной шашки
+    // Сканирование для одной шашки(на возможность двойного прижка)
     private List<Piece> ScanForPossibleMove(Piece p, int x, int y)
     {
         forcedPieces = new List<Piece>();
@@ -297,7 +366,6 @@ public class CheckersBoard : MonoBehaviour
         {
             forcedPieces.Add(pieces[x, y]);
         }
-
         return forcedPieces;
     }
 
@@ -320,7 +388,6 @@ public class CheckersBoard : MonoBehaviour
                 }
             }
         }
-
         return forcedPieces;
     }
 
@@ -363,6 +430,113 @@ public class CheckersBoard : MonoBehaviour
     private void MovePiece(Piece p, int x, int y)
     {
         p.transform.position = (Vector3.right * x) + (Vector3.forward * y) + boardOffset + pieceOffset;
+    }
+
+
+    public void Alert(string text)
+    {
+        alertCanvas.GetComponentInChildren<Text>().text = text;
+        alertCanvas.alpha = 1;
+        lastAlert = Time.time;
+        alertActive = true;
+    }
+
+    private void AIRealise()
+    {
+        if(!isWhiteTurn)
+        {
+            int corX = 0;
+            int corY = 0;
+
+            for(int i = 0; i < 8; i++)
+            {
+                for(int j = 0; j < 8; j++)
+                {
+                    if(pieces[i,j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                    {
+                        if(pieces[i,j].isForceToMove(pieces, i, j))
+                        {
+                            forcedAIPieces.Add(pieces[i, j]);
+                            if(forcedAIPieces.Count == 1)
+                            {
+                                corX = i;
+                                corY = j;
+                                selectedPiece = pieces[corX, corY];
+                            }
+                        }
+                    }
+                }
+            }
+
+            int xo = 0;
+            int yo = 0;
+
+                if(forcedAIPieces.Count > 0)
+                {
+                    forcedAIPieces[0].BlackCoord(pieces, corX, corY, out xo, out yo); 
+                    forcedAIPieces.RemoveRange(0,forcedAIPieces.Count);
+                    Piece p = pieces[(corX+xo)/2, (corY+yo)/2];
+                    if(p != null)
+                    {
+                        // Удаляем среднюю шашку между двумя
+                        pieces[(corX+xo)/2, (corY+yo)/2] = null;
+                        DestroyImmediate(p.gameObject);
+                        hasKilled = true;
+                    }
+                    selectedPiece = pieces[corX, corY];
+                    pieces[xo, yo] = selectedPiece;
+                    pieces[corX, corY] = null;
+                    MovePiece(selectedPiece, xo, yo);
+                    EndTurn();
+                }
+                else
+                {
+                    for(int i = 7; i >= 0; i--)
+                    {
+                        for(int j = 7; j >= 0; j--)
+                        {
+                            if(pieces[i,j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                            {
+                                if(i > 0 && j>0 && pieces[i,j].ValidMove(pieces, i, j, i-1, j-1))
+                                {
+                                    selectedPiece = pieces[i, j];
+                                    pieces[i-1, j-1] = selectedPiece;
+                                    pieces[i, j] = null;
+                                    MovePiece(selectedPiece, i-1, j-1);
+                                    EndTurn();
+                                    goto metka;
+                                }
+                                else if(i<7 && pieces[i,j].ValidMove(pieces, i, j, i+1, j-1))
+                                {
+                                    selectedPiece = pieces[i, j];
+                                    pieces[i+1, j-1] = selectedPiece;
+                                    pieces[i, j] = null;
+                                    MovePiece(selectedPiece, i+1, j-1);
+                                    EndTurn();
+                                    goto metka;
+                                }
+                            }
+                        }
+                    }
+                    metka : Debug.Log("Good!");
+                }
+        }
+    }
+
+    public void UpdateAlert()
+    {
+        if(alertActive)
+        {
+            if(Time.time - lastAlert > 1.5f)
+            {
+                alertCanvas.alpha = 1 - ((Time.time - lastAlert) - 1.5f);
+
+                if(Time.time - lastAlert > 2.5f)
+                {
+                    alertActive = false;
+                }
+            }
+        }
     }
 
 }
