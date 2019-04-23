@@ -291,7 +291,10 @@ public class CheckersBoard : MonoBehaviour
 
         // Сканировать на возможный ход (если убили)
         if(ScanForPossibleMove(selectedPiece, x, y).Count != 0 && hasKilled)
+        {
+			hasKilled = false;
             return;
+		}
 
         isWhiteTurn = !isWhiteTurn;
         hasKilled = false;
@@ -312,6 +315,74 @@ public class CheckersBoard : MonoBehaviour
         else
         {
             if(isWhite)
+            {
+                Alert(client.players[0].name + "'s turn");
+            }
+            else
+            {
+                Alert(client.players[1].name + "'s turn");
+            }
+        }
+    }
+	
+	private void EndTurnAI(int xo, int yo)
+    {
+        if (selectedPiece != null)
+        {
+            // Белая шашка приземлилась на конец борда
+            if (selectedPiece.isWhite && !selectedPiece.isKing && yo == 7)
+            {
+                selectedPiece.isKing = true;
+                selectedPiece.transform.Rotate(Vector3.right * 180);
+            }
+            // Черная шашка приземлилась на конец борда
+            if (!selectedPiece.isWhite && !selectedPiece.isKing && yo == 0)
+            {
+                selectedPiece.isKing = true;
+                selectedPiece.transform.Rotate(Vector3.right * 180);
+            }
+        }
+
+        // Our message
+        if (client)
+        {
+            string msg = "CMOV|";
+            msg += startDrag.x.ToString() + "|";
+            msg += startDrag.y.ToString() + "|";
+            msg += endDrag.x.ToString() + "|";
+            msg += endDrag.y.ToString();
+
+            client.Send(msg);
+        }
+
+        selectedPiece = null;
+        startDrag = Vector2.zero;
+
+        if (ScanForPossibleMove(selectedPiece, xo, yo).Count != 0 && hasKilled)
+        {   
+            hasKilled = false;
+            return;
+        }
+
+        isWhiteTurn = !isWhiteTurn;
+        hasKilled = false;
+        CheckVictory();
+
+         if (!client)
+        {
+            isWhite = !isWhite;
+            if (isWhite)
+            {
+                Alert("White player's turn");
+            }
+            else
+            {
+                Alert("Black player's turn");
+            }
+        }
+        else
+        {
+            if (isWhite)
             {
                 Alert(client.players[0].name + "'s turn");
             }
