@@ -519,16 +519,16 @@ public class CheckersBoard : MonoBehaviour
             int corX = 0;
             int corY = 0;
 
-            for(int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)
             {
-                for(int j = 0; j < 8; j++)
+                for (int j = 0; j < 8; j++)
                 {
-                    if(pieces[i,j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                    if (pieces[i, j] != null && pieces[i, j].isWhite == isWhiteTurn)
                     {
-                        if(pieces[i,j].isForceToMove(pieces, i, j))
+                        if (pieces[i, j].isForceToMove(pieces, i, j))
                         {
                             forcedAIPieces.Add(pieces[i, j]);
-                            if(forcedAIPieces.Count == 1)
+                            if (forcedAIPieces.Count == 1)
                             {
                                 corX = i;
                                 corY = j;
@@ -542,55 +542,79 @@ public class CheckersBoard : MonoBehaviour
             int xo = 0;
             int yo = 0;
 
-                if(forcedAIPieces.Count > 0)
+            if (forcedAIPieces.Count > 0)
+            {
+                forcedAIPieces[0].BlackCoord(pieces, corX, corY, out xo, out yo);
+                forcedAIPieces.RemoveRange(0, forcedAIPieces.Count);
+                // Did we kill anything
+                // If this is a jump
+                if (Mathf.Abs(xo - corX) == 2)
                 {
-                    forcedAIPieces[0].BlackCoord(pieces, corX, corY, out xo, out yo); 
-                    forcedAIPieces.RemoveRange(0,forcedAIPieces.Count);
-                    Piece p = pieces[(corX+xo)/2, (corY+yo)/2];
-                    if(p != null)
+                    // Для получения средней шашки между двумя
+                    Piece p = pieces[(corX + xo) / 2, (corY + yo) / 2];
+                    if (p != null)
                     {
                         // Удаляем среднюю шашку между двумя
-                        pieces[(corX+xo)/2, (corY+yo)/2] = null;
+                        pieces[(corX + xo) / 2, (corY + yo) / 2] = null;
                         DestroyImmediate(p.gameObject);
                         hasKilled = true;
                     }
-                    selectedPiece = pieces[corX, corY];
-                    pieces[xo, yo] = selectedPiece;
-                    pieces[corX, corY] = null;
-                    MovePiece(selectedPiece, xo, yo);
-                    EndTurn();
                 }
-                else
+                selectedPiece = pieces[corX, corY];
+                pieces[xo, yo] = selectedPiece;
+                pieces[corX, corY] = null;
+                MovePiece(selectedPiece, xo, yo);
+                EndTurnAI(xo, yo);
+            }
+            else
+            {
+                for (int i = 7; i >= 0; i--)
                 {
-                    for(int i = 7; i >= 0; i--)
+                    for (int j = 7; j >= 0; j--)
                     {
-                        for(int j = 7; j >= 0; j--)
+                        if (pieces[i, j] != null && pieces[i, j].isWhite == isWhiteTurn)
                         {
-                            if(pieces[i,j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                            if(j < 7 && i < 7 && pieces[i, j].isKing && pieces[i, j].ValidMove(pieces, i, j, i + 1, j + 1))
                             {
-                                if(i > 0 && j>0 && pieces[i,j].ValidMove(pieces, i, j, i-1, j-1))
-                                {
-                                    selectedPiece = pieces[i, j];
-                                    pieces[i-1, j-1] = selectedPiece;
-                                    pieces[i, j] = null;
-                                    MovePiece(selectedPiece, i-1, j-1);
-                                    EndTurn();
-                                    goto metka;
-                                }
-                                else if(i<7 && pieces[i,j].ValidMove(pieces, i, j, i+1, j-1))
-                                {
-                                    selectedPiece = pieces[i, j];
-                                    pieces[i+1, j-1] = selectedPiece;
-                                    pieces[i, j] = null;
-                                    MovePiece(selectedPiece, i+1, j-1);
-                                    EndTurn();
-                                    goto metka;
-                                }
+                                selectedPiece = pieces[i, j];
+                                pieces[i + 1, j + 1] = selectedPiece;
+                                pieces[i, j] = null;
+                                MovePiece(selectedPiece, i + 1, j + 1);
+                                EndTurnAI(i + 1, j + 1);
+                                goto metka;
+                            }
+                            else if(j < 7 && i > 0 && pieces[i, j].isKing && pieces[i, j].ValidMove(pieces, i, j, i - 1, j + 1))
+                            {
+                                selectedPiece = pieces[i, j];
+                                pieces[i - 1, j + 1] = selectedPiece;
+                                pieces[i, j] = null;
+                                MovePiece(selectedPiece, i - 1, j + 1);
+                                EndTurnAI(i - 1, j + 1);
+                                goto metka;
+                            }
+                            else if(i > 0 && j > 0 && pieces[i, j].ValidMove(pieces, i, j, i - 1, j - 1))
+                            {
+                                selectedPiece = pieces[i, j];
+                                pieces[i - 1, j - 1] = selectedPiece;
+                                pieces[i, j] = null;
+                                MovePiece(selectedPiece, i - 1, j - 1);
+                                EndTurnAI(i - 1, j - 1);
+                                goto metka;
+                            }
+                            else if (i < 7 && pieces[i, j].ValidMove(pieces, i, j, i + 1, j - 1))
+                            {
+                                selectedPiece = pieces[i, j];
+                                pieces[i + 1, j - 1] = selectedPiece;
+                                pieces[i, j] = null;
+                                MovePiece(selectedPiece, i + 1, j - 1);
+                                EndTurnAI(i + 1, j - 1);
+                                goto metka;
                             }
                         }
                     }
-                    metka : Debug.Log("Good!");
                 }
+            metka: Debug.Log("Good!");
+            }
         }
     }
 
