@@ -16,18 +16,23 @@ public class Client : MonoBehaviour
     private StreamWriter writer;
     private StreamReader reader;
 
-    private List<GameClient> players = new List<GameClient>();
+    public delegate void TryMov(int x1, int y1, int x2, int y2);
+
+    public event TryMov OnTryMove;
+
+
+    public List<GameClient> players = new List<GameClient>();
 
     private void Start()
     {
-        DontDestroyOnLoad(gameObject);
+         DontDestroyOnLoad(gameObject);
     }
 
     public bool ConnectToServer(string host, int port)
     {
         if(socketReady)
             return false;
-        
+
         try
         {
             socket = new TcpClient(host, port);
@@ -91,7 +96,7 @@ public class Client : MonoBehaviour
                 break;
             // Msg from our game
             case "SMOV":
-                CheckersBoard.Instance.TryMove(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]), int.Parse(aData[4]));
+                OnTryMove(int.Parse(aData[1]), int.Parse(aData[2]), int.Parse(aData[3]), int.Parse(aData[4]));
                 break;
         }
     }

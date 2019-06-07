@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Piece : MonoBehaviour
+public class Piece
 {
     public bool isWhite;
     public bool isKing;
 
+    public Piece(bool isWhite, bool isKing)
+    {
+        this.isWhite = isWhite;
+        this.isKing = isKing;
+    }
 
     public bool isForceToMove(Piece[,] board, int x, int y)
     {
@@ -190,66 +195,66 @@ public class Piece : MonoBehaviour
 
 
     // Метод для правильного передвежения шашек
-    public bool ValidMove(Piece[,] board, int x1, int y1, int x2, int y2)
-    {
-        // If you are moving on top of another piece
-        if (board[x2, y2] != null)
-        {
-            return false;
-        }
-        // Берем абсолютное значение
-        int deltaMove = Mathf.Abs(x1 - x2);
-        // Нам понадобится -1 когда мы находимся в черной команде
-        int deltaMoveY = y2 - y1;
+    // public bool ValidMove(Piece[,] board, int x1, int y1, int x2, int y2)
+    // {
+    //     // If you are moving on top of another piece
+    //     if (board[x2, y2] != null)
+    //     {
+    //         return false;
+    //     }
+    //     // Берем абсолютное значение
+    //     int deltaMove = Mathf.Abs(x1 - x2);
+    //     // Нам понадобится -1 когда мы находимся в черной команде
+    //     int deltaMoveY = y2 - y1;
 
-        // For white team
-        if (isWhite || isKing)
-        {
-            // For normal jump
-            if (deltaMove == 1)
-            {
-                if (deltaMoveY == 1)
-                {
-                    return true;
-                }
-            }
-            // For kill jump
-            // kill piece
-            else if (deltaMove == 2)
-            {
-                if (deltaMoveY == 2)
-                {
-                    // Для получения средней шашки между двумя
-                    Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
-                    if (p != null && p.isWhite != isWhite)
-                        return true;
-                }
-            }
-        }
+    //     // For white team
+    //     if (isWhite || isKing)
+    //     {
+    //         // For normal jump
+    //         if (deltaMove == 1)
+    //         {
+    //             if (deltaMoveY == 1)
+    //             {
+    //                 return true;
+    //             }
+    //         }
+    //         // For kill jump
+    //         // kill piece
+    //         else if (deltaMove == 2)
+    //         {
+    //             if (deltaMoveY == 2)
+    //             {
+    //                 // Для получения средней шашки между двумя
+    //                 Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
+    //                 if (p != null && p.isWhite != isWhite)
+    //                     return true;
+    //             }
+    //         }
+    //     }
 
-        // For black team
-        if (!isWhite || isKing)
-        {
-            if (deltaMove == 1)
-            {
-                if (deltaMoveY == -1)
-                {
-                    return true;
-                }
-            }
-            // kill piece
-            else if (deltaMove == 2)
-            {
-                if (deltaMoveY == -2)
-                {
-                    // Для получения средней шашки между двумя
-                    Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
-                    if (p != null && p.isWhite != isWhite)
-                        return true;
-                }
-            }
-        }
+    //     // For black team
+    //     if (!isWhite || isKing)
+    //     {
+    //         if (deltaMove == 1)
+    //         {
+    //             if (deltaMoveY == -1)
+    //             {
+    //                 return true;
+    //             }
+    //         }
+    //         // kill piece
+    //         else if (deltaMove == 2)
+    //         {
+    //             if (deltaMoveY == -2)
+    //             {
+    //                 // Для получения средней шашки между двумя
+    //                 Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
+    //                 if (p != null && p.isWhite != isWhite)
+    //                     return true;
+    //             }
+    //         }
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 }

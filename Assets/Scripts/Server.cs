@@ -71,8 +71,6 @@ public class Server : MonoBehaviour
         for(int i = 0; i < disconnectList.Count - 1; i++)
         {
             // Tell our player somebody has dosconected
-
-
             clients.Remove(disconnectList[i]);
             disconnectList.RemoveAt(i);
         }
@@ -176,7 +174,6 @@ public class Server : MonoBehaviour
             case "CMOV":
                 Broadcast("SMOV|" + aData[1] + "|" + aData[2] + "|" + aData[3] + "|" + aData[4],clients);
                 break;
-
         }
     }
 }

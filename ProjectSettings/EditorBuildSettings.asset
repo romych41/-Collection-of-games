@@ -4,5 +4,17 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 7827ae772f193b44f82aca941e2726c9
+  - enabled: 1
+    path: Assets/Slider/Scenes/Demo.unity
+    guid: 287093ab924cb804ba14b509f9dc41d9
+  - enabled: 1
+    path: Assets/Scenes/NewMenu.unity
+    guid: c320c8538d503704d9dd267f84747d0f
+  - enabled: 1
+    path: Assets/Scenes/CheckersScene.unity
+    guid: 7e9ca90e1bcc5ce4781d3dff3372d7e1
   m_configObjects: {}
