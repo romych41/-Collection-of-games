@@ -5,8 +5,7 @@ using UnityEngine.UI;
 
 public class Paint : MonoBehaviour
 {
-
-    //public Piece[,] pieces = new Piece[8, 8];
+    
     public IDictionary<Piece, PiecePaint> pieces = new Dictionary<Piece, PiecePaint>();
 
     public GameObject whitePiecePrefab;
@@ -91,7 +90,7 @@ public class Paint : MonoBehaviour
             checkers.AIRealise();
         }
 
-        if (true)//(checkers.isWhite) ? checkers.isWhiteTurn : !checkers.isWhiteTurn)
+        if (true)
         {
             Debug.Log("Yes!");
             int x = (int)mouseOver.x;
@@ -350,6 +349,5 @@ public class Paint : MonoBehaviour
             }
         }
     }
-
 
 }

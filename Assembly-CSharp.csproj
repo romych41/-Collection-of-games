@@ -53,16 +53,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Scripts\CheckersBoard.cs" />
-     <Compile Include="Assets\Scripts\Client.cs" />
-     <Compile Include="Assets\Scripts\Exit.cs" />
-     <Compile Include="Assets\Scripts\GameManager.cs" />
-     <Compile Include="Assets\Scripts\MainLogic.cs" />
-     <Compile Include="Assets\Scripts\NextScene.cs" />
-     <Compile Include="Assets\Scripts\Paint.cs" />
-     <Compile Include="Assets\Scripts\Piece.cs" />
-     <Compile Include="Assets\Scripts\PiecePaint.cs" />
-     <Compile Include="Assets\Scripts\Server.cs" />
      <Compile Include="Assets\Slider\Scripts\SliderMenu.cs" />
  <Reference Include="Unity.TextMeshPro.Editor">
  <HintPath>C:/Users/Pavel/Desktop/Collection of Games Last/Collection of Games Roma/Collection of Games/Collection of Games/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
@@ -640,6 +630,16 @@
  <Reference Include="System.Xml.Serialization">
  <HintPath>C:/Users/Pavel/Desktop/UnityStart/Editor/Data/NetStandard/compat/2.0.0/shims/netfx/System.Xml.Serialization.dll</HintPath>
  </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="ChekersD.csproj">
+      <Project>{5E3EB93B-23E0-9F0B-1C5E-C607418CC6E3}</Project>      <Name>ChekersD</Name>    </ProjectReference>
+    <ProjectReference Include="PiecePaintD.csproj">
+      <Project>{8C023ECF-2CF9-FB19-B29B-1F7EE628498C}</Project>      <Name>PiecePaintD</Name>    </ProjectReference>
+    <ProjectReference Include="Main.csproj">
+      <Project>{731A8A72-58F8-3827-4860-7D552A6C9781}</Project>      <Name>Main</Name>    </ProjectReference>
+    <ProjectReference Include="ClientServerD.csproj">
+      <Project>{ED04F556-6702-AFA1-6DB9-692178114EA5}</Project>      <Name>ClientServerD</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
