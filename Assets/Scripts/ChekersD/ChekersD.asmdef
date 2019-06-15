@@ -1,8 +1,6 @@
 {
     "name": "ChekersD",
-    "references": [
-        "ClientServerD"
-    ],
+    "references": [],
     "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
