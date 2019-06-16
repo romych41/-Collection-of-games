@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class Piece
 {
-    public bool isWhite;
-    public bool isKing;
+    public bool IsWhite { get; }
+    public bool IsKing { get; set; }
 
-    public Piece(bool isWhite, bool isKing)
+    public Piece(bool isWhite, bool isKing = false)
     {
-        this.isWhite = isWhite;
-        this.isKing = isKing;
+        IsWhite = isWhite;
+        IsKing = isKing;
     }
 
-    public bool isForceToMove(Piece[,] board, int x, int y)
+    public bool IsForceToMove(Piece[,] board, int x, int y)
     {
-        if (isWhite || isKing)
+        if (IsWhite || IsKing)
         {
             // Проверяем две клетке слева от нас и справа от нас
             // Kill Top left 
@@ -23,7 +23,7 @@ public class Piece
             {
                 Piece p = board[x - 1, y + 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x - 2, y + 2] == null)
@@ -38,7 +38,7 @@ public class Piece
             {
                 Piece p = board[x + 1, y + 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x + 2, y + 2] == null)
@@ -50,14 +50,14 @@ public class Piece
         }
 
         // Для черной команды
-        if (!isWhite || isKing)
+        if (!IsWhite || IsKing)
         {
             // Kill Bot left 
             if (x >= 2 && y >= 2)
             {
                 Piece p = board[x - 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x - 2, y - 2] == null)
@@ -72,7 +72,7 @@ public class Piece
             {
                 Piece p = board[x + 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x + 2, y - 2] == null)
@@ -82,6 +82,7 @@ public class Piece
                 }
             }
         }
+
         return false;
     }
 
@@ -91,7 +92,7 @@ public class Piece
         yo = 0;
         // Kill Bot left 
 
-        if (isKing)
+        if (IsKing)
         {
             // Проверяем две клетке слева от нас и справа от нас
             // Kill Top left 
@@ -99,7 +100,7 @@ public class Piece
             {
                 Piece p = board[x - 1, y + 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x - 2, y + 2] == null)
@@ -115,7 +116,7 @@ public class Piece
             {
                 Piece p = board[x + 1, y + 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x + 2, y + 2] == null)
@@ -130,7 +131,7 @@ public class Piece
             {
                 Piece p = board[x - 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x - 2, y - 2] == null)
@@ -146,7 +147,7 @@ public class Piece
             {
                 Piece p = board[x + 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x + 2, y - 2] == null)
@@ -163,7 +164,7 @@ public class Piece
             {
                 Piece p = board[x - 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x - 2, y - 2] == null)
@@ -177,9 +178,9 @@ public class Piece
             // Kill Bot right 
             if (x <= 5 && y >= 2)
             {
-                Piece p = board[x + 1, y - 1];
+                var p = board[x + 1, y - 1];
                 // If there is a piece, and it is not the same color as ours
-                if (p != null && p.isWhite != isWhite)
+                if (p != null && p.IsWhite != IsWhite)
                 {
                     // Check it its possible to land after the jump (можем преземлиться)
                     if (board[x + 2, y - 2] == null)
@@ -189,72 +190,6 @@ public class Piece
                     }
                 }
             }
-
         }
     }
-
-
-    // Метод для правильного передвежения шашек
-    // public bool ValidMove(Piece[,] board, int x1, int y1, int x2, int y2)
-    // {
-    //     // If you are moving on top of another piece
-    //     if (board[x2, y2] != null)
-    //     {
-    //         return false;
-    //     }
-    //     // Берем абсолютное значение
-    //     int deltaMove = Mathf.Abs(x1 - x2);
-    //     // Нам понадобится -1 когда мы находимся в черной команде
-    //     int deltaMoveY = y2 - y1;
-
-    //     // For white team
-    //     if (isWhite || isKing)
-    //     {
-    //         // For normal jump
-    //         if (deltaMove == 1)
-    //         {
-    //             if (deltaMoveY == 1)
-    //             {
-    //                 return true;
-    //             }
-    //         }
-    //         // For kill jump
-    //         // kill piece
-    //         else if (deltaMove == 2)
-    //         {
-    //             if (deltaMoveY == 2)
-    //             {
-    //                 // Для получения средней шашки между двумя
-    //                 Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
-    //                 if (p != null && p.isWhite != isWhite)
-    //                     return true;
-    //             }
-    //         }
-    //     }
-
-    //     // For black team
-    //     if (!isWhite || isKing)
-    //     {
-    //         if (deltaMove == 1)
-    //         {
-    //             if (deltaMoveY == -1)
-    //             {
-    //                 return true;
-    //             }
-    //         }
-    //         // kill piece
-    //         else if (deltaMove == 2)
-    //         {
-    //             if (deltaMoveY == -2)
-    //             {
-    //                 // Для получения средней шашки между двумя
-    //                 Piece p = board[(x1 + x2) / 2, (y1 + y2) / 2];
-    //                 if (p != null && p.isWhite != isWhite)
-    //                     return true;
-    //             }
-    //         }
-    //     }
-
-    //     return false;
-    // }
 }

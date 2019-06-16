@@ -1,23 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using CoreLib;
 using System;
 
 public class CheckersBoard
 {
+    private readonly Piece[,] _pieces = new Piece[8, 8];
+    public bool IsWhiteTurn { get; private set; } = true;
+    public bool HasKilled;
 
-    public Piece[,] pieces = new Piece[8, 8];
+    public Piece SelectedPiece;
 
-    // Для проверки цвета шашки
-    public bool isWhite;
-    public bool isWhiteTurn;
-    public bool hasKilled;
-
-    public Piece selectedPiece;
-
-    public Client client;
+    public Client Client;
 
 
     // Объявляем делегат
@@ -29,16 +22,16 @@ public class CheckersBoard
     public event Action<Piece> OnDestr;
 
     public event Action<bool, Client> OnEndTurn;
-    
+
 
     public Piece GetPiece(int x1, int y1)
     {
-        return pieces[x1, y1];
+        return _pieces[x1, y1];
     }
 
     public void SetPiece(Piece p, int x, int y)
     {
-        pieces[x, y] = p;
+        _pieces[x, y] = p;
     }
 
 
@@ -50,133 +43,87 @@ public class CheckersBoard
 
         // Promotions
         // King
-        if (selectedPiece != null)
+        if (SelectedPiece != null)
         {
             // Белая шашка приземлилась на конец борда
-            if (selectedPiece.isWhite && !selectedPiece.isKing && y2 == 7)
+            if (SelectedPiece.IsWhite && !SelectedPiece.IsKing && y2 == 7)
             {
-                selectedPiece.isKing = true;
+                SelectedPiece.IsKing = true;
                 //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing(selectedPiece);
+                OnKing?.Invoke(SelectedPiece);
             }
+
             // Черная шашка приземлилась на конец борда
-            if (!selectedPiece.isWhite && !selectedPiece.isKing && y2 == 0)
+            if (!SelectedPiece.IsWhite && !SelectedPiece.IsKing && y2 == 0)
             {
-                selectedPiece.isKing = true;
+                SelectedPiece.IsKing = true;
                 //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing(selectedPiece);
+                OnKing?.Invoke(SelectedPiece);
             }
         }
 
         // Our message
-        if (client != null)
+        if (Client != null)
         {
             string msg = "CMOV|";
-            msg += x1.ToString() + "|";
-            msg += y1.ToString() + "|";
-            msg += x2.ToString() + "|";
+            msg += x1 + "|";
+            msg += y1 + "|";
+            msg += x2 + "|";
             msg += y2.ToString();
-
-            client.Send(msg);
+            Client.Send(msg);
         }
 
-        selectedPiece = null;
-        // startDrag = Vector2.zero;
-        // x1 = 0;
-        // y1 = 0;
+        SelectedPiece = null;
 
         // Сканировать на возможный ход (если убили). Для продолжения хода.
-        if (ScanForPossibleMove(selectedPiece, x2, y2).Count != 0 && hasKilled)
+        if (ScanForForcedMoves(x2, y2).Count != 0 && HasKilled)
         {
-            hasKilled = false;
+            HasKilled = false;
             return;
         }
-
-        Debug.Log("White turn");
-        isWhiteTurn = !isWhiteTurn;
-        Debug.Log("Black turn");
-        isWhite = !isWhite;
-        hasKilled = false;
+        IsWhiteTurn = !IsWhiteTurn;
+        HasKilled = false;
+        OnEndTurn?.Invoke(IsWhiteTurn, Client);
+        
         CheckVictory();
 
-        OnEndTurn(isWhiteTurn, client);
-
-        // if (client == null)
-        // {
-        //     isWhite = !isWhite;
-        //     // if (isWhite)
-        //     // {
-        //     //     Alert("White player's turn");
-        //     // }
-        //     // else
-        //     // {
-        //     //     Alert("Black player's turn");
-        //     // }
-        //     if (isWhite)
-        //     {
-        //         Debug.Log("White player's turn");
-        //     }
-        //     else
-        //     {
-        //         Debug.Log("Black player's turn");
-        //     }
-        // }
-        // else
-        // {
-        //     // if (isWhite)
-        //     // {
-        //     //     Alert(client.players[0].name + "'s turn");
-        //     // }
-        //     // else
-        //     // {
-        //     //     Alert(client.players[1].name + "'s turn");
-        //     // }
-        //     if (isWhite)
-        //     {
-        //         Debug.Log(client.players[0].name + "'s turn");
-        //     }
-        //     else
-        //     {
-        //         Debug.Log(client.players[1].name + "'s turn");
-        //     }
-        // }
-
+        
     }
 
-    private void EndTurnAI(int xo, int yo)
+    private void EndTurnAi(int xo, int yo)
     {
-        if (selectedPiece != null)
+        if (SelectedPiece != null)
         {
             // Белая шашка приземлилась на конец борда
-            if (selectedPiece.isWhite && !selectedPiece.isKing && yo == 7)
+            if (SelectedPiece.IsWhite && !SelectedPiece.IsKing && yo == 7)
             {
-                selectedPiece.isKing = true;
-                //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing(selectedPiece);
+                SelectedPiece.IsKing = true;
+                OnKing?.Invoke(SelectedPiece);
             }
+
             // Черная шашка приземлилась на конец борда
-            if (!selectedPiece.isWhite && !selectedPiece.isKing && yo == 0)
+            if (!SelectedPiece.IsWhite && !SelectedPiece.IsKing && yo == 0)
             {
-                selectedPiece.isKing = true;
-                //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing(selectedPiece);
+                SelectedPiece.IsKing = true;
+                OnKing?.Invoke(SelectedPiece);
             }
         }
 
-        selectedPiece = null;
-        //startDrag = Vector2.zero;
-
-        if (ScanForPossibleMove(selectedPiece, xo, yo).Count != 0 && hasKilled)
+        
+        MovePieces?.Invoke(SelectedPiece, xo, yo);
+        SelectedPiece = null;
+        if (ScanForForcedMoves(xo, yo).Count != 0 && HasKilled)
         {
-            hasKilled = false;
+            HasKilled = false;
             return;
         }
 
-        isWhiteTurn = !isWhiteTurn;
-        isWhite = !isWhite;
-        hasKilled = false;
+        IsWhiteTurn = !IsWhiteTurn;
+        HasKilled = false;
+        
+        
         CheckVictory();
-
+        
     }
 
     private void CheckVictory()
@@ -187,16 +134,16 @@ public class CheckersBoard
         {
             for (int j = 0; j < 8; j++)
             {
-                if (pieces[i, j] != null)
+                if (_pieces[i, j] != null)
                 {
                     //hasWhite = true;
-                    if(pieces[i, j].isWhite)
+                    if (_pieces[i, j].IsWhite)
                     {
                         hasWhite = true;
                     }
                     else
                     {
-                       hasBlack = true;
+                        hasBlack = true;
                     }
                 }
             }
@@ -207,11 +154,11 @@ public class CheckersBoard
         {
             Victory(false);
         }
+
         if (!hasBlack)
         {
             Victory(true);
         }
-
     }
 
     private void Victory(bool isWhite)
@@ -223,18 +170,19 @@ public class CheckersBoard
     }
 
     // Сканирование для одной шашки(на возможность двойного прижка)
-    private List<Piece> ScanForPossibleMove(Piece p, int x, int y)
+    private List<Piece> ScanForForcedMoves(int x, int y)
     {
         var forcedPieces = new List<Piece>();
 
-        if (pieces[x, y].isForceToMove(pieces, x, y))
+        if (_pieces[x, y].IsForceToMove(_pieces, x, y))
         {
-            forcedPieces.Add(pieces[x, y]);
+            forcedPieces.Add(_pieces[x, y]);
         }
+
         return forcedPieces;
     }
 
-    public List<Piece> ScanForPossibleMove()
+    public List<Piece> ScanForForcedMoves()
     {
         var forcedPieces = new List<Piece>();
 
@@ -244,21 +192,22 @@ public class CheckersBoard
         {
             for (int j = 0; j < 8; j++)
             {
-                if (pieces[i, j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                if (_pieces[i, j] != null && _pieces[i, j].IsWhite == IsWhiteTurn)
                 {
-                    if (pieces[i, j].isForceToMove(pieces, i, j))
+                    if (_pieces[i, j].IsForceToMove(_pieces, i, j))
                     {
-                        forcedPieces.Add(pieces[i, j]);
+                        forcedPieces.Add(_pieces[i, j]);
                     }
                 }
             }
         }
+
         return forcedPieces;
     }
 
-    public void AIRealise()
+    public void AiRealise()
     {
-        if (!isWhiteTurn)
+        if (!IsWhiteTurn)
         {
             int corX = 0;
             int corY = 0;
@@ -267,52 +216,44 @@ public class CheckersBoard
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    if (pieces[i, j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                    if (_pieces[i, j] != null && _pieces[i, j].IsWhite == IsWhiteTurn)
                     {
-                        if (pieces[i, j].isForceToMove(pieces, i, j))
+                        if (_pieces[i, j].IsForceToMove(_pieces, i, j))
                         {
-                            //forcedAIPieces.Add(pieces[i, j]);
-
-                            //if (forcedAIPieces.Count == 1)
-                            //{
-
-                                corX = i;
-                                corY = j;
-                                selectedPiece = pieces[corX, corY];
-                                goto bla;
-                            //}
+                            corX = i;
+                            corY = j;
+                            SelectedPiece = _pieces[corX, corY];
+                            goto exit_loop;
                         }
                     }
                 }
             }
-            bla:
-            int xo = 0;
-            int yo = 0;
 
-            if (selectedPiece != null)
+            exit_loop:
+
+            if (SelectedPiece != null)
             {
-                selectedPiece.BlackCoord(pieces, corX, corY, out xo, out yo);
-                //forcedAIPieces.RemoveRange(0, forcedAIPieces.Count);
+                SelectedPiece.BlackCoord(_pieces, corX, corY, out var xo, out var yo);
                 // Did we kill anything
                 // If this is a jump
                 if (Mathf.Abs(xo - corX) == 2)
                 {
                     // Для получения средней шашки между двумя
-                    Piece p = pieces[(corX + xo) / 2, (corY + yo) / 2];
+                    var p = _pieces[(corX + xo) / 2, (corY + yo) / 2];
                     if (p != null)
                     {
                         // Удаляем среднюю шашку между двумя
-                        pieces[(corX + xo) / 2, (corY + yo) / 2] = null;
-                        //DestroyImmediate(p.gameObject);
-                        OnDestr(p);
-                        hasKilled = true;
+                        _pieces[(corX + xo) / 2, (corY + yo) / 2] = null;
+                        OnDestr?.Invoke(p);
+                        HasKilled = true;
                     }
                 }
-                selectedPiece = pieces[corX, corY];
-                pieces[xo, yo] = selectedPiece;
-                pieces[corX, corY] = null;
-                MovePieces(selectedPiece, xo, yo);
-                EndTurnAI(xo, yo);
+
+                SelectedPiece = _pieces[corX, corY];
+                _pieces[xo, yo] = SelectedPiece;
+                _pieces[corX, corY] = null;
+               
+                EndTurnAi(xo, yo);
             }
             else
             {
@@ -320,61 +261,64 @@ public class CheckersBoard
                 {
                     for (int j = 7; j >= 0; j--)
                     {
-                        if (pieces[i, j] != null && pieces[i, j].isWhite == isWhiteTurn)
+                        if (_pieces[i, j] != null && _pieces[i, j].IsWhite == IsWhiteTurn)
                         {
-                            if (j < 7 && i < 7 && pieces[i, j].isKing && ValidMove(pieces[i, j], i, j, i + 1, j + 1))
+                            if (j < 7 && i < 7 && _pieces[i, j].IsKing && 
+                                IsValidMove(_pieces[i, j], i, j, i + 1, j + 1))
                             {
-                                selectedPiece = pieces[i, j];
-                                pieces[i + 1, j + 1] = selectedPiece;
-                                pieces[i, j] = null;
-                                MovePieces(selectedPiece, i + 1, j + 1);
-                                EndTurnAI(i + 1, j + 1);
-                                goto metka;
+                                SelectedPiece = _pieces[i, j];
+                                _pieces[i + 1, j + 1] = SelectedPiece;
+                                _pieces[i, j] = null;
+                                EndTurnAi(i + 1, j + 1);
+                                return;
                             }
-                            else if (j < 7 && i > 0 && pieces[i, j].isKing && ValidMove(pieces[i, j], i, j, i - 1, j + 1))
+
+                            if (j < 7 && i > 0 && _pieces[i, j].IsKing &&
+                                IsValidMove(_pieces[i, j], i, j, i - 1, j + 1))
                             {
-                                selectedPiece = pieces[i, j];
-                                pieces[i - 1, j + 1] = selectedPiece;
-                                pieces[i, j] = null;
-                                MovePieces(selectedPiece, i - 1, j + 1);
-                                EndTurnAI(i - 1, j + 1);
-                                goto metka;
+                                SelectedPiece = _pieces[i, j];
+                                _pieces[i - 1, j + 1] = SelectedPiece;
+                                _pieces[i, j] = null;
+                                EndTurnAi(i - 1, j + 1);
+                                return;
                             }
-                            else if (i > 0 && j > 0 && ValidMove(pieces[i, j], i, j, i - 1, j - 1))
+
+                            if (i > 0 && j > 0 && 
+                                IsValidMove(_pieces[i, j], i, j, i - 1, j - 1))
                             {
-                                selectedPiece = pieces[i, j];
-                                pieces[i - 1, j - 1] = selectedPiece;
-                                pieces[i, j] = null;
-                                MovePieces(selectedPiece, i - 1, j - 1);
-                                EndTurnAI(i - 1, j - 1);
-                                goto metka;
+                                SelectedPiece = _pieces[i, j];
+                                _pieces[i - 1, j - 1] = SelectedPiece;
+                                _pieces[i, j] = null;
+                                EndTurnAi(i - 1, j - 1);
+                                return;
                             }
-                            else if (i < 7 && ValidMove(pieces[i, j], i, j, i + 1, j - 1))
+
+                            if (i < 7 && 
+                                IsValidMove(_pieces[i, j], i, j, i + 1, j - 1))
                             {
-                                selectedPiece = pieces[i, j];
-                                pieces[i + 1, j - 1] = selectedPiece;
-                                pieces[i, j] = null;
-                                MovePieces(selectedPiece, i + 1, j - 1);
-                                EndTurnAI(i + 1, j - 1);
-                                goto metka;
+                                SelectedPiece = _pieces[i, j];
+                                _pieces[i + 1, j - 1] = SelectedPiece;
+                                _pieces[i, j] = null;
+                                EndTurnAi(i + 1, j - 1);
+                               return;
                             }
                         }
                     }
                 }
-            metka: Debug.Log("Good!");
             }
         }
     }
 
-     public bool ValidMove(Piece piece, int x1, int y1, int x2, int y2)
+    public bool IsValidMove(Piece piece, int x1, int y1, int x2, int y2)
     {
-        var isWhite = piece.isWhite;
-        var isKing = piece.isKing;
+        var isWhite = piece.IsWhite;
+        var isKing = piece.IsKing;
         // If you are moving on top of another piece
-        if (pieces[x2, y2] != null)
+        if (_pieces[x2, y2] != null)
         {
             return false;
         }
+
         // Берем абсолютное значение
         int deltaMove = Mathf.Abs(x1 - x2);
         // Нам понадобится -1 когда мы находимся в черной команде
@@ -398,8 +342,8 @@ public class CheckersBoard
                 if (deltaMoveY == 2)
                 {
                     // Для получения средней шашки между двумя
-                    Piece p = pieces[(x1 + x2) / 2, (y1 + y2) / 2];
-                    if (p != null && p.isWhite != isWhite)
+                    Piece p = _pieces[(x1 + x2) / 2, (y1 + y2) / 2];
+                    if (p != null && p.IsWhite != isWhite)
                         return true;
                 }
             }
@@ -421,8 +365,8 @@ public class CheckersBoard
                 if (deltaMoveY == -2)
                 {
                     // Для получения средней шашки между двумя
-                    Piece p = pieces[(x1 + x2) / 2, (y1 + y2) / 2];
-                    if (p != null && p.isWhite != isWhite)
+                    var p = _pieces[(x1 + x2) / 2, (y1 + y2) / 2];
+                    if (p != null && p.IsWhite != isWhite)
                         return true;
                 }
             }

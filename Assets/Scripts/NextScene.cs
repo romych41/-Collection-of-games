@@ -8,19 +8,18 @@ public class NextScene : MonoBehaviour
 {
     public bool PlayWithAI;
 
-    public int mode;
+    public GameMode mode;
 
     public void Next()
     {
         SceneManager.LoadScene("Slider/Scenes/Demo");
     }
 
-    public void PlayGameScene()
+    public void OnHotSeat()
     {
         SceneManager.LoadScene("CheckersScene");
         DontDestroyOnLoad(gameObject);
-        //PlayWithAI = false;
-        mode = 1;
+        mode = GameMode.HotSeat;
     }
 
     public void PrevMenu()
@@ -53,18 +52,17 @@ public class NextScene : MonoBehaviour
 
     }
 
-    public void NextNewMenu()
+    public void OnMultiPlayer()
     {
         SceneManager.LoadScene("NewMenu");
-        mode = 2;
+        mode = GameMode.MultiPlayer;
     }
 
-    public void SinglePlay()
+    public void OnSinglePlay()
     {   
         SceneManager.LoadScene("CheckersScene");
         DontDestroyOnLoad(gameObject);
-        //PlayWithAI = true;
-        mode = 3;
+        mode = GameMode.Bot;
     }
 
 }

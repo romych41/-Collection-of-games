@@ -27,7 +27,7 @@ public class Server : MonoBehaviour
         {
             server = new TcpListener(IPAddress.Any, port);
             server.Start();
-            
+
             StartListening();
         }
         catch (Exception e)
@@ -43,32 +43,29 @@ public class Server : MonoBehaviour
             return;
         }
 
-        foreach(ServerClient c in clients)
+        foreach (var c in clients)
         {
             // Is the clients still connected?
-            if(!IsConnected(c.tcp))
+            if (IsConnected(c.Tcp))
             {
-                c.tcp.Close();
-                disconnectList.Add(c);
-                continue;
-            }
-            else
-            {
-                NetworkStream s = c.tcp.GetStream();
-                if(s.DataAvailable)
+                var s = c.Tcp.GetStream();
+                if (s.DataAvailable)
                 {
-                    StreamReader reader = new StreamReader(s, true);
-                    string data = reader.ReadLine();
-
-                    if(data != null)
+                    using (var reader = new StreamReader(s, true))
                     {
-                        OnIncomingData(c, data);
+                        var data = reader.ReadLine();
+                        if (data != null) OnIncomingData(c, data);
                     }
                 }
             }
+            else
+            {
+                c.Tcp.Close();
+                disconnectList.Add(c);
+            }
         }
 
-        for(int i = 0; i < disconnectList.Count - 1; i++)
+        for (int i = 0; i < disconnectList.Count - 1; i++)
         {
             // Tell our player somebody has dosconected
             clients.Remove(disconnectList[i]);
@@ -84,16 +81,16 @@ public class Server : MonoBehaviour
 
     private void AcceptTcpClient(IAsyncResult ar)
     {
-        TcpListener listener = (TcpListener)ar.AsyncState;
+        var listener = (TcpListener) ar.AsyncState;
 
-        string allUsers = "";
-        foreach (ServerClient i in clients)
+        var allUsers = "";
+        foreach (var i in clients)
         {
-            allUsers += i.clientName + '|';
+            allUsers += i.ClientName + '|';
         }
 
         // Создаем определение для этого самого человека
-        ServerClient sc = new ServerClient(listener.EndAcceptTcpClient(ar));
+        var sc = new ServerClient(listener.EndAcceptTcpClient(ar));
         // Add in our List
         clients.Add(sc);
 
@@ -106,37 +103,33 @@ public class Server : MonoBehaviour
         //Debug.Log("Somebody has connected!");
     }
 
-    private bool IsConnected(TcpClient c)
+    private static bool IsConnected(TcpClient c)
     {
         try
         {
-            if(c != null && c.Client != null && c.Client.Connected)
+            if (c?.Client != null && c.Client.Connected)
             {
-                if(c.Client.Poll(0, SelectMode.SelectRead))
-                    return !(c.Client.Receive(new byte[1], SocketFlags.Peek) == 0);
-
+                if (c.Client.Poll(0, SelectMode.SelectRead))
+                    return c.Client.Receive(new byte[1], SocketFlags.Peek) != 0;
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
         catch
         {
-            
             return false;
         }
     }
 
     // Server Send
-    private void Broadcast(string data, List<ServerClient> cl)
+    private static void Broadcast(string data, IEnumerable<ServerClient> cl)
     {
-        foreach (ServerClient sc in cl)
+        foreach (var sc in cl)
         {
             try
             {
-                StreamWriter writer = new StreamWriter(sc.tcp.GetStream());
+                var writer = new StreamWriter(sc.Tcp.GetStream());
                 writer.WriteLine(data);
                 writer.Flush();
             }
@@ -151,43 +144,41 @@ public class Server : MonoBehaviour
     private void Broadcast(string data, ServerClient c)
     {
         // Put our client in List and call first Broadcast funct
-       List<ServerClient> sc = new List<ServerClient> { c };
-       Broadcast(data, sc);
+        var sc = new List<ServerClient> {c};
+        Broadcast(data, sc);
     }
 
-    
+
     // Server Read
     private void OnIncomingData(ServerClient c, string data)
     {
         Debug.Log("Server: " + data);
-        string[] aData = data.Split('|');
+        var aData = data.Split('|');
 
-        switch(aData[0])
+        switch (aData[0])
         {
             case "CWHO":
-                c.clientName = aData[1];
-                c.isHost = (aData[2] == "0") ? false : true;
-                Broadcast("SCNN|" + c.clientName, clients);
+                c.ClientName = aData[1];
+                c.IsHost = (aData[2] != "0");
+                Broadcast("SCNN|" + c.ClientName, clients);
                 break;
 
             // Msg from our game
             case "CMOV":
-                Broadcast("SMOV|" + aData[1] + "|" + aData[2] + "|" + aData[3] + "|" + aData[4],clients);
+                Broadcast("SMOV|" + aData[1] + "|" + aData[2] + "|" + aData[3] + "|" + aData[4], clients);
                 break;
         }
     }
 }
 
 public class ServerClient
-{   
-    public string clientName;
-    public TcpClient tcp;
-    public bool isHost;
+{
+    public string ClientName { get; set; }
+    public TcpClient Tcp { get; set; }
+    public bool IsHost { get; set; }
 
     public ServerClient(TcpClient tcp)
     {
-        this.tcp = tcp;
+        Tcp = tcp;
     }
-
 }
-

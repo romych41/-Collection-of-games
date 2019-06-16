@@ -663,7 +663,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1068207175}
-        m_MethodName: NextNewMenu
+        m_MethodName: OnMultiPlayer
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1270,7 +1270,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1068207175}
-        m_MethodName: PlayGameScene
+        m_MethodName: OnHotSeat
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2071,7 +2071,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1068207175}
-        m_MethodName: SinglePlay
+        m_MethodName: OnSinglePlay
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
