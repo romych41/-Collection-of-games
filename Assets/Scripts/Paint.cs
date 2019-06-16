@@ -184,9 +184,8 @@ public class Paint : MonoBehaviour
                     _checkers.HasKilled = true;
                 }
             }
-
-            // Were we supposed to kill anything?
             // If we did not kill anything and just moved
+            // when we were supposed to do a forced move
             var forcedPieces = _checkers.ScanForForcedMoves();
             if (forcedPieces.Count != 0 && _checkers.HasKilled == false)
             {

@@ -8,7 +8,8 @@ public class CheckersBoard
     public bool IsWhiteTurn { get; private set; } = true;
     public bool HasKilled;
 
-    public Piece SelectedPiece;
+    // TODO: delete this field
+    private Piece _selectedPiece;
 
     public Client Client;
 
@@ -37,30 +38,8 @@ public class CheckersBoard
 
     public void EndTurn(int x1, int y1, int x2, int y2)
     {
-        // Для двойного прижка
-        // int x = (int)endDrag.x;
-        // int y = (int)endDrag.y;
-
-        // Promotions
-        // King
-        if (SelectedPiece != null)
-        {
-            // Белая шашка приземлилась на конец борда
-            if (SelectedPiece.IsWhite && !SelectedPiece.IsKing && y2 == 7)
-            {
-                SelectedPiece.IsKing = true;
-                //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing?.Invoke(SelectedPiece);
-            }
-
-            // Черная шашка приземлилась на конец борда
-            if (!SelectedPiece.IsWhite && !SelectedPiece.IsKing && y2 == 0)
-            {
-                SelectedPiece.IsKing = true;
-                //selectedPiece.transform.Rotate(Vector3.right * 180);
-                OnKing?.Invoke(SelectedPiece);
-            }
-        }
+        _selectedPiece = _pieces[x2, y2];
+        CheckForKing(y2);
 
         // Our message
         if (Client != null)
@@ -73,7 +52,7 @@ public class CheckersBoard
             Client.Send(msg);
         }
 
-        SelectedPiece = null;
+        _selectedPiece = null;
 
         // Сканировать на возможный ход (если убили). Для продолжения хода.
         if (ScanForForcedMoves(x2, y2).Count != 0 && HasKilled)
@@ -81,37 +60,20 @@ public class CheckersBoard
             HasKilled = false;
             return;
         }
+
         IsWhiteTurn = !IsWhiteTurn;
         HasKilled = false;
         OnEndTurn?.Invoke(IsWhiteTurn, Client);
-        
-        CheckVictory();
 
-        
+        CheckVictory();
     }
 
     private void EndTurnAi(int xo, int yo)
     {
-        if (SelectedPiece != null)
-        {
-            // Белая шашка приземлилась на конец борда
-            if (SelectedPiece.IsWhite && !SelectedPiece.IsKing && yo == 7)
-            {
-                SelectedPiece.IsKing = true;
-                OnKing?.Invoke(SelectedPiece);
-            }
-
-            // Черная шашка приземлилась на конец борда
-            if (!SelectedPiece.IsWhite && !SelectedPiece.IsKing && yo == 0)
-            {
-                SelectedPiece.IsKing = true;
-                OnKing?.Invoke(SelectedPiece);
-            }
-        }
-
-        
-        MovePieces?.Invoke(SelectedPiece, xo, yo);
-        SelectedPiece = null;
+        _selectedPiece = _pieces[xo, yo];
+        CheckForKing(yo);
+        MovePieces?.Invoke(_selectedPiece, xo, yo);
+        _selectedPiece = null;
         if (ScanForForcedMoves(xo, yo).Count != 0 && HasKilled)
         {
             HasKilled = false;
@@ -120,10 +82,19 @@ public class CheckersBoard
 
         IsWhiteTurn = !IsWhiteTurn;
         HasKilled = false;
-        
-        
+
+
         CheckVictory();
-        
+    }
+
+    private void CheckForKing(int yo)
+    {
+        if (_selectedPiece != null && !_selectedPiece.IsKing &&
+            ((_selectedPiece.IsWhite && yo == 7) || (!_selectedPiece.IsWhite && yo == 0)))
+        {
+            _selectedPiece.IsKing = true;
+            OnKing?.Invoke(_selectedPiece);
+        }
     }
 
     private void CheckVictory()
@@ -155,7 +126,7 @@ public class CheckersBoard
             Victory(false);
         }
 
-        if (!hasBlack)
+        else if (!hasBlack)
         {
             Victory(true);
         }
@@ -216,24 +187,23 @@ public class CheckersBoard
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    if (_pieces[i, j] != null && _pieces[i, j].IsWhite == IsWhiteTurn)
+                    if (_pieces[i, j] != null &&
+                        _pieces[i, j].IsWhite == IsWhiteTurn &&
+                        _pieces[i, j].IsForceToMove(_pieces, i, j))
                     {
-                        if (_pieces[i, j].IsForceToMove(_pieces, i, j))
-                        {
-                            corX = i;
-                            corY = j;
-                            SelectedPiece = _pieces[corX, corY];
-                            goto exit_loop;
-                        }
+                        corX = i;
+                        corY = j;
+                        _selectedPiece = _pieces[corX, corY];
+                        goto exit_loop;
                     }
                 }
             }
 
             exit_loop:
 
-            if (SelectedPiece != null)
+            if (_selectedPiece != null)
             {
-                SelectedPiece.BlackCoord(_pieces, corX, corY, out var xo, out var yo);
+                _selectedPiece.BlackCoord(_pieces, corX, corY, out var xo, out var yo);
                 // Did we kill anything
                 // If this is a jump
                 if (Mathf.Abs(xo - corX) == 2)
@@ -249,10 +219,10 @@ public class CheckersBoard
                     }
                 }
 
-                SelectedPiece = _pieces[corX, corY];
-                _pieces[xo, yo] = SelectedPiece;
+                _selectedPiece = _pieces[corX, corY];
+                _pieces[xo, yo] = _selectedPiece;
                 _pieces[corX, corY] = null;
-               
+
                 EndTurnAi(xo, yo);
             }
             else
@@ -263,11 +233,11 @@ public class CheckersBoard
                     {
                         if (_pieces[i, j] != null && _pieces[i, j].IsWhite == IsWhiteTurn)
                         {
-                            if (j < 7 && i < 7 && _pieces[i, j].IsKing && 
+                            if (j < 7 && i < 7 && _pieces[i, j].IsKing &&
                                 IsValidMove(_pieces[i, j], i, j, i + 1, j + 1))
                             {
-                                SelectedPiece = _pieces[i, j];
-                                _pieces[i + 1, j + 1] = SelectedPiece;
+                                _selectedPiece = _pieces[i, j];
+                                _pieces[i + 1, j + 1] = _selectedPiece;
                                 _pieces[i, j] = null;
                                 EndTurnAi(i + 1, j + 1);
                                 return;
@@ -276,31 +246,31 @@ public class CheckersBoard
                             if (j < 7 && i > 0 && _pieces[i, j].IsKing &&
                                 IsValidMove(_pieces[i, j], i, j, i - 1, j + 1))
                             {
-                                SelectedPiece = _pieces[i, j];
-                                _pieces[i - 1, j + 1] = SelectedPiece;
+                                _selectedPiece = _pieces[i, j];
+                                _pieces[i - 1, j + 1] = _selectedPiece;
                                 _pieces[i, j] = null;
                                 EndTurnAi(i - 1, j + 1);
                                 return;
                             }
 
-                            if (i > 0 && j > 0 && 
+                            if (i > 0 && j > 0 &&
                                 IsValidMove(_pieces[i, j], i, j, i - 1, j - 1))
                             {
-                                SelectedPiece = _pieces[i, j];
-                                _pieces[i - 1, j - 1] = SelectedPiece;
+                                _selectedPiece = _pieces[i, j];
+                                _pieces[i - 1, j - 1] = _selectedPiece;
                                 _pieces[i, j] = null;
                                 EndTurnAi(i - 1, j - 1);
                                 return;
                             }
 
-                            if (i < 7 && 
+                            if (i < 7 &&
                                 IsValidMove(_pieces[i, j], i, j, i + 1, j - 1))
                             {
-                                SelectedPiece = _pieces[i, j];
-                                _pieces[i + 1, j - 1] = SelectedPiece;
+                                _selectedPiece = _pieces[i, j];
+                                _pieces[i + 1, j - 1] = _selectedPiece;
                                 _pieces[i, j] = null;
                                 EndTurnAi(i + 1, j - 1);
-                               return;
+                                return;
                             }
                         }
                     }
