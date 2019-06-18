@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using UnityEngine;
 
 public class Client : MonoBehaviour
-{   
+{
     public string clientName;
     public bool isHost;
 
@@ -25,13 +25,12 @@ public class Client : MonoBehaviour
 
     private void Start()
     {
-         DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
-    public bool ConnectToServer(string host, int port)
+    public void ConnectToServer(string host, int port)
     {
-        if(socketReady)
-            return false;
+        if (socketReady) return;
 
         try
         {
@@ -46,32 +45,27 @@ public class Client : MonoBehaviour
         {
             Debug.Log("Socket error" + e.Message);
         }
-
-        return socketReady;
     }
 
     // Socket - communication between client and server
     void Update()
     {
-        if(socketReady)
+        if (socketReady && stream.DataAvailable)
         {
-            if(stream.DataAvailable)
+            string data = reader.ReadLine();
+            if (data != null)
             {
-                string data = reader.ReadLine();
-                if(data != null)
-                {
-                    OnIncomingData(data);
-                }
+                OnIncomingData(data);
             }
         }
     }
-    
+
     // Sending messaged to the server
     public void Send(string data)
     {
-        if(!socketReady)
+        if (!socketReady)
             return;
-        
+
         writer.WriteLine(data);
         writer.Flush();
     }
@@ -80,16 +74,17 @@ public class Client : MonoBehaviour
     private void OnIncomingData(string data)
     {
         Debug.Log("Client: " + data);
-        string[] aData = data.Split('|');
+        var aData = data.Split('|');
 
-        switch(aData[0])
+        switch (aData[0])
         {
-            case "SWHO": 
-                for(int i = 1; i < aData.Length - 1; i++)
+            case "SWHO":
+                for (int i = 1; i < aData.Length - 1; i++)
                 {
                     UserConnected(aData[i], false);
                 }
-                Send("CWHO|" + clientName + "|" + ((isHost)?1:0).ToString());
+
+                Send("CWHO|" + clientName + "|" + ((isHost) ? 1 : 0).ToString());
                 break;
             case "SCNN":
                 UserConnected(aData[1], false);
@@ -103,12 +98,11 @@ public class Client : MonoBehaviour
 
     private void UserConnected(string name, bool host)
     {
-        GameClient c = new GameClient();
-        c.name = name;
+        GameClient c = new GameClient {Name = name, IsHost = host};
 
         players.Add(c);
 
-        if(players.Count == 2)
+        if (players.Count == 2)
             GameManager.Instance.StartGame();
     }
 
@@ -116,6 +110,7 @@ public class Client : MonoBehaviour
     {
         CloseSocket();
     }
+
     private void OnDisable()
     {
         CloseSocket();
@@ -123,9 +118,9 @@ public class Client : MonoBehaviour
 
     private void CloseSocket()
     {
-        if(!socketReady)
+        if (!socketReady)
             return;
-        
+
         writer.Close();
         reader.Close();
         socket.Close();
@@ -135,6 +130,6 @@ public class Client : MonoBehaviour
 
 public class GameClient
 {
-    public string name;
-    public bool isHost;
+    public string Name { get; set; }
+    public bool IsHost { get; set; }
 }
