@@ -96,18 +96,10 @@ public class Paint : MonoBehaviour
         }
     }
 
-    public void SelectPiece(int x, int y)
+    private void SelectPiece(int x, int y)
     {
         // Out of bounds
-        if (x < 0 || x >= 8 || y < 0 || y >= 8)
-        {
-            return;
-        }
-        var p = _checkers.GetPiece(x, y);
-        var forcedPieces = _checkers.ScanForForcedMoves();
-        if (p != null && p.IsWhite == _checkers.IsWhiteTurn &&
-            (!_checkers.Client || _checkers.Client.isHost == _checkers.IsWhiteTurn) 
-            && (forcedPieces.Count == 0 || forcedPieces.Find(fp => fp == p) != null))
+        if (_checkers.CanBeMoved(x, y))
         {
             _startDrag = new Vector2(x, y);
             _isSelected = true;
@@ -184,6 +176,7 @@ public class Paint : MonoBehaviour
                     _checkers.HasKilled = true;
                 }
             }
+
             // If we did not kill anything and just moved
             // when we were supposed to do a forced move
             var forcedPieces = _checkers.ScanForForcedMoves();
@@ -194,11 +187,10 @@ public class Paint : MonoBehaviour
             }
             else
             {
-                _checkers.SetPiece(p, x2, y2);
-                _checkers.SetPiece(null, x1, y1);
+                _checkers.MovePiece((x1, y2), (x2, y2));
                 MovePiece(pieces[p], x2, y2);
                 _isSelected = false;
-                _checkers.EndTurn(x1, y1, x2, y2);
+                _checkers.EndTurn(p, x1, y1, x2, y2);
             }
         }
     }
