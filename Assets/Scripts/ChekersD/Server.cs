@@ -51,11 +51,9 @@ public class Server : MonoBehaviour
                 var s = c.Tcp.GetStream();
                 if (s.DataAvailable)
                 {
-                    using (var reader = new StreamReader(s, true))
-                    {
-                        var data = reader.ReadLine();
-                        if (data != null) OnIncomingData(c, data);
-                    }
+                    var reader = new StreamReader(s, true);
+                    var data = reader.ReadLine();
+                    if (data != null) OnIncomingData(c, data);
                 }
             }
             else
@@ -103,7 +101,7 @@ public class Server : MonoBehaviour
         //Debug.Log("Somebody has connected!");
     }
 
-    private static bool IsConnected(TcpClient c)
+    private bool IsConnected(TcpClient c)
     {
         try
         {

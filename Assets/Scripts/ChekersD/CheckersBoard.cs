@@ -40,7 +40,7 @@ public class CheckersBoard
         CheckForKing(movedPiece, x1, y2);
 
         // Our message
-        if (Client != null && Client.isHost != IsWhiteTurn)
+        if (Client != null && Client.isHost == IsWhiteTurn)
         {
             string msg = "CMOV|";
             msg += x1 + "|";

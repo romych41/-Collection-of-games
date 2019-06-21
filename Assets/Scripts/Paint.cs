@@ -187,7 +187,7 @@ public class Paint : MonoBehaviour
             }
             else
             {
-                _checkers.MovePiece((x1, y2), (x2, y2));
+                _checkers.MovePiece((x1, y1), (x2, y2));
                 MovePiece(pieces[p], x2, y2);
                 _isSelected = false;
                 _checkers.EndTurn(p, x1, y1, x2, y2);

@@ -30,7 +30,6 @@ public class Client : MonoBehaviour
 
     public void ConnectToServer(string host, int port)
     {
-        if (socketReady) return;
 
         try
         {
